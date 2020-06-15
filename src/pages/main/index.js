@@ -1,51 +1,51 @@
 import React, { Component } from "react";
 import { FaFolder, FaSearch } from "react-icons/fa";
-
+import { format } from "date-fns";
 import api from "../../services/api";
 import { Container, Form, SubmitButton, List } from "./styles";
 
 export default class Main extends Component {
   state = {
-    newRepo: "",
-    repositories: []
+    newPath: "",
+    repositories: [],
+    totalFiles: "",
+    totalSize: ""
   };
 
   handleInputChange = e => {
-    this.setState({ newRepo: e.target.value });
+    this.setState({ newPath: e.target.value });
   };
 
   handleSubmit = async e => {
     e.preventDefault();
 
-    const { newRepo, repositories } = this.state;
+    const { newPath, repositories } = this.state;
 
-    const response = await api.get(`/repos/${newRepo}`);
-
-    const data = {
-      name: response.data.full_name
-    };
-
-    this.setState({
-      repositories: [...repositories, data],
-      newRepo: ""
+    const response = await api.post("", {
+      path: newPath
     });
 
-    console.log(response.data);
+    this.setState({
+      repositories: response.data.files,
+      totalFiles: response.data.totalFiles,
+      totalSize: response.data.totalSize,
+      newPath: ""
+    });
   };
 
   render() {
-    const { newRepo, repositories } = this.state;
+    const { newPath, repositories, totalFiles, totalSize } = this.state;
     return (
       <Container>
         <h1>
           <FaFolder />
-          Repositorios
+          Files
         </h1>
         <Form onSubmit={this.handleSubmit}>
           <input
             type="text"
-            placeholder="Adicionar repositorio"
-            value={newRepo}
+            placeholder="Add path"
+            value={newPath}
             onChange={this.handleInputChange}
           />
 
@@ -53,10 +53,23 @@ export default class Main extends Component {
             <FaSearch color="#FFF" size={14} />
           </SubmitButton>
         </Form>
+        <div>
+          <h2>
+            Total Files: {totalFiles} Total Size:{totalSize}
+          </h2>
+        </div>
         <List>
           {repositories.map(repository => (
             <li key={repository.name}>
-              <span>{repository.name}</span>
+              <div>
+                <span>Name: {repository.name}</span>
+                <br />
+                Size: {repository.fsize + " - "}
+                <span>
+                  Last Modification:
+                  {format(new Date(repository.mtime), "yyyy-MM-dd HH:mm:ss")}
+                </span>
+              </div>
             </li>
           ))}
         </List>
